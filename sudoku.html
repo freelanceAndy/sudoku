@@ -1,0 +1,298 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Sudoku!</title>
+<link rel="icon" type="image/ico" href="http://127.0.0.1/favicon.ico" />
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <title>HTML Sudoku Board</title>
+    
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style type="text/css">
+    
+      html, body {
+        background-color: #FAFAFA
+      }
+
+      table {
+        border: 2px solid #000000;
+      }
+
+      td {
+        border: 1px solid #000000;
+        text-align: center;
+        vertical-align: middle;  
+      }
+
+      input {
+        color: #000000;
+        padding: 0;
+        border: 0;
+        text-align: center;
+        width: 48px;
+        height: 48px;
+        font-size: 24px;
+        background-color: #FFFFFF;
+        outline: none;
+      }
+
+      input:disabled {
+        background-color: #EEEEEE;
+      }
+
+      #cell-0,  #cell-1,  #cell-2  { border-top:    2px solid #000000; }
+      #cell-2,  #cell-11, #cell-20 { border-right:  2px solid #000000; }
+      #cell-18, #cell-19, #cell-20 { border-bottom: 2px solid #000000; }
+      #cell-0,  #cell-9,  #cell-18 { border-left:   2px solid #000000; }
+
+      #cell-3,  #cell-4,  #cell-5  { border-top:    2px solid #000000; }
+      #cell-5,  #cell-14, #cell-23 { border-right:  2px solid #000000; }
+      #cell-21, #cell-22, #cell-23 { border-bottom: 2px solid #000000; }
+      #cell-3,  #cell-12, #cell-21 { border-left:   2px solid #000000; }
+
+      #cell-6,  #cell-7,  #cell-8  { border-top:    2px solid #000000; }
+      #cell-8,  #cell-17, #cell-26 { border-right:  2px solid #000000; }
+      #cell-24, #cell-25, #cell-26 { border-bottom: 2px solid #000000; }
+      #cell-6,  #cell-15, #cell-24 { border-left:   2px solid #000000; }
+
+      #cell-27, #cell-28, #cell-29 { border-top:    2px solid #000000; }
+      #cell-29, #cell-38, #cell-47 { border-right:  2px solid #000000; }
+      #cell-45, #cell-46, #cell-47 { border-bottom: 2px solid #000000; }
+      #cell-27, #cell-36, #cell-45 { border-left:   2px solid #000000; }
+
+      #cell-30, #cell-31, #cell-32 { border-top:    2px solid #000000; }
+      #cell-32, #cell-41, #cell-50 { border-right:  2px solid #000000; }
+      #cell-48, #cell-49, #cell-50 { border-bottom: 2px solid #000000; }
+      #cell-30, #cell-39, #cell-48 { border-left:   2px solid #000000; }
+
+      #cell-33, #cell-34, #cell-35 { border-top:    2px solid #000000; }
+      #cell-35, #cell-44, #cell-53 { border-right:  2px solid #000000; }
+      #cell-51, #cell-52, #cell-53 { border-bottom: 2px solid #000000; }
+      #cell-33, #cell-42, #cell-51 { border-left:   2px solid #000000; }
+
+      #cell-54, #cell-55, #cell-56 { border-top:    2px solid #000000; }
+      #cell-56, #cell-65, #cell-74 { border-right:  2px solid #000000; }
+      #cell-72, #cell-73, #cell-74 { border-bottom: 2px solid #000000; }
+      #cell-54, #cell-63, #cell-72 { border-left:   2px solid #000000; }
+
+      #cell-57, #cell-58, #cell-59 { border-top:    2px solid #000000; }
+      #cell-59, #cell-68, #cell-77 { border-right:  2px solid #000000; }
+      #cell-75, #cell-76, #cell-77 { border-bottom: 2px solid #000000; }
+      #cell-57, #cell-66, #cell-75 { border-left:   2px solid #000000; }
+
+      #cell-60, #cell-61, #cell-62 { border-top:    2px solid #000000; }
+      #cell-62, #cell-71, #cell-80 { border-right:  2px solid #000000; }
+      #cell-78, #cell-79, #cell-80 { border-bottom: 2px solid #000000; }
+      #cell-60, #cell-69, #cell-78 { border-left:   2px solid #000000; }
+
+    </style>
+
+</head>
+<body>
+<div id="main"></div>
+<script>
+
+const sym_row = Symbol('row');
+const sym_col = Symbol('column');
+const sym_blk = Symbol('block');
+const all_values = new Set(['1','2','3','4','5','6','7','8','9']);
+class SudokuCell {
+  constructor(value, idx) {
+    if (value === '_') {
+      value = null;
+      this.impossible_values = new Set();
+    } else {
+        if (!all_values.has(value)) {
+          throw new Error(`value: ${value} must be a single-digit string integer.`);
+        }
+        this.impossible_values = new Set(all_values);
+        this.impossible_values.delete(value);
+    }
+    this.value = value;
+    this.idx = idx;
+    this.row = Math.ceil((idx + 1)/9);
+    this.col = parseInt((idx / 9).toFixed(2).toString().split('.').slice(-1)[0][0])+1;
+    this.blk = blk_lookup[this.row][this.col];
+  }
+  value_setter(submitted_value) {
+    if (this.impossible_values.has(submitted_value)) {
+      throw new Error(`${submitted_value} is listed as impossible in row: ${this.row} col: ${this.col}`);
+    } else if (!all_values.has(submitted_value)) {
+      throw new Error(`submitted_value: ${submitted_value} must be 1-9 (as a string)`);
+    }
+    this.value = submitted_value;
+  }
+  possible_values() {
+    if (this.value === null) {
+      return new Set([...all_values].filter(x => !this.impossible_values.has(x)));
+    } else {
+      return new Set([this.value]);
+    }
+  }
+  ent(symbol) {
+    if (symbol === sym_row) {
+      return this.row;
+    } else if (symbol === sym_col) {
+      return this.col;
+    } else if (symbol === sym_blk) {
+      return this.blk;
+    }
+  }
+}
+const blk_col_1 = {1: 1, 2: 1, 3: 1, 4: 2, 5: 2, 6: 2, 7: 3, 8: 3, 9: 3}
+const blk_col_2 = {1: 4, 2: 4, 3: 4, 4: 5, 5: 5, 6: 5, 7: 6, 8: 6, 9: 6}
+const blk_col_3 = {1: 7, 2: 7, 3: 7, 4: 8, 5: 8, 6: 8, 7: 9, 8: 9, 9: 9}
+const blk_lookup = {
+  1: blk_col_1,
+  2: blk_col_1,
+  3: blk_col_1,
+  4: blk_col_2,
+  5: blk_col_2,
+  6: blk_col_2,
+  7: blk_col_3,
+  8: blk_col_3,
+  9: blk_col_3
+}
+
+class SudokuSolver {
+  constructor(puzzle_str) {
+    this.puzzle_str = puzzle_str;
+    this.puzzle = [];
+    this.puzzle_by_id  = {};
+    this.puzzle_by_row = {};
+    this.puzzle_by_col = {};
+    this.puzzle_by_blk = {};
+    this.puzzle_ent = {sym_row: this.puzzle_by_row, sym_col: this.puzzle_by_col, sym_blk: this.puzzle_by_blk};
+    this.unsolved_cell_count = 0
+    for (let i=0; i < this.puzzle_str.length; i++) {
+      let cell = new SudokuCell(this.puzzle_str.charAt(i), i);
+      this.puzzle.push(cell);
+      this.puzzle_by_id[`${cell.row}${cell.col}`] = cell
+      this.append_to_map_array(this.puzzle_by_row, cell, cell.row)
+      this.append_to_map_array(this.puzzle_by_col, cell, cell.col)
+      this.append_to_map_array(this.puzzle_by_blk, cell, cell.blk)
+      if (cell.value === null) {
+        this.unsolved_cell_count++
+      }
+    }
+  }
+  append_to_map_array(obj, item, item_vector) {
+    if (obj.hasOwnProperty(item_vector)) {
+      obj[item_vector].push(item)
+    } else {
+      obj[item_vector] = [item]
+    }
+  }
+}
+
+let puzzle_str = "_6___914__28__6_579_421_______3_5__8_8_9_4_2_3__8_1_______527_661_7__43__756___1_";
+let solver = new SudokuSolver(puzzle_str);
+var cell_lookup = {};
+function addTable(solver, cell_lookup) {
+  var t, r, c, text, input;
+  div = document.createElement("div");
+  div.id = "board_container";
+  board_name = document.createElement("h");
+  board_name.textContent = "My Great Board";
+  div.appendChild(board_name);
+  t = document.createElement('table');
+  div.appendChild(t);
+  t.id = "grid";
+  for (let i=1; i < 10; i++) {
+    r = t.insertRow();
+    let cells = solver.puzzle_by_row[i];
+    for (let cell of solver.puzzle_by_row[i]) {
+      c = r.insertCell();
+      input = document.createElement("input");
+      input.type = 'tel';;
+      input.minLength = 1;
+      input.maxLength = 1;
+      input.addEventListener("input", confirmInput, true);
+      input.id = `cell-${cell.idx}`;
+      input.rowcol = `${cell.row}-${cell.col}`;
+      cell_lookup[input.rowcol] = input.id;
+      if (cell.value != null) {
+        input.value = cell.value;
+        input.disabled = true;
+      } 
+      c.appendChild(input);
+    }
+  }
+  document.body.appendChild(div);
+}
+
+function confirmInput(e) {
+  e.target.value = e.target.value.replace(/\D*/gi, '');
+}
+
+addTable(solver, cell_lookup);
+
+function keycheck(event) {
+  //                     1, 2, 3, 4, 5, 6, 7, 8, 9
+  //let allowed_keys = [49,50,51,52,53,54,55,56,57,39,68,38,87,37,65,40,83];
+  let allowed_keys = [39,68,38,87,37,65,40,83];
+  if (!allowed_keys.includes(event.keyCode)) {return;}
+  var active = document.activeElement;
+  if (!active.hasOwnProperty('rowcol')) {return;}
+
+  if (event.keyCode===39 || event.keyCode===68) {
+    var direction = sym_right;
+  } else if (event.keyCode===37 || event.keyCode===65) {
+    var direction = sym_left;
+  } else if (event.keyCode===38 || event.keyCode===87) {
+    var direction = sym_up;
+  } else if (event.keyCode===40 || event.keyCode===83) {
+    var direction = sym_down;
+  }
+  let s = active.rowcol.split('-');
+  var r = s[0];
+  var c = s[1];
+  focus_next(r,c,direction);
+}
+document.onkeydown = keycheck;
+
+const sym_up    = Symbol('UP');
+const sym_down  = Symbol('DOWN');
+const sym_left  = Symbol('LEFT');
+const sym_right = Symbol('RIGHT');
+function focus_next(r,c,direction) {
+  if ([sym_left, sym_right].includes(direction)) {
+    var inc = parseInt(c);
+  } else {
+    var inc = parseInt(r);
+  }
+  if ([sym_left, sym_up].includes(direction)) {
+    var incrementer = Array.from({length: inc - 1}, () => -1);
+  } else {
+    var incrementer = Array.from({length: 9 - inc}, () => 1);
+  }
+  for (let i of incrementer) {
+    inc = inc + i; 
+    if ([sym_left, sym_right].includes(direction)) {
+      var next_rowcol = `${r}-${inc}`;
+    } else {
+      var next_rowcol = `${inc}-${c}`;
+    }
+    var next_id = cell_lookup[next_rowcol];
+    if (document.getElementById(next_id).disabled === false) {break;}
+  }
+  document.getElementById(next_id).focus();
+  console.log(`current: ${r} ${c}`)
+  console.log(`next: ${next_rowcol}`)
+  console.log(`disabled: ${document.getElementById(next_id).disabled}`)
+}
+
+
+
+
+
+
+function myFunction() {alert(`${solver.puzzle_str}`)}
+
+</script>
+<p><button onclick="myFunction()">Puzzle Str</button></p>
+</body>
+</html>
