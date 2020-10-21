@@ -90,10 +90,11 @@
 
     </style>
 
+
 </head>
 <body>
 <div id="main"></div>
-<script>
+<script type="text/javascript">
 
 const sym_row = Symbol('row');
 const sym_col = Symbol('column');
@@ -211,6 +212,7 @@ function addTable(solver, cell_lookup) {
       input.minLength = 1;
       input.maxLength = 1;
       input.addEventListener("input", confirmInput, true);
+      input.addEventListener("focus", blurAndSetCurrent, true);
       input.id = `cell-${cell.idx}`;
       input.rowcol = `${cell.row}-${cell.col}`;
       cell_lookup[input.rowcol] = input.id;
@@ -228,16 +230,37 @@ function confirmInput(e) {
   e.target.value = e.target.value.replace(/\D*/gi, '');
 }
 
+var current_cell
+function blurAndSetCurrent(e) {
+  e.target.blur();
+  try {
+    current_cell.style.backgroundColor = '#FFFFFF';
+  } catch (error) {
+    console.error(error);
+  }
+  current_cell = e.target;
+  current_cell.style.backgroundColor = '#ABCDEF';
+}
+
 addTable(solver, cell_lookup);
 
-function keycheck(event) {
-  //                     1, 2, 3, 4, 5, 6, 7, 8, 9
-  //let allowed_keys = [49,50,51,52,53,54,55,56,57,39,68,38,87,37,65,40,83];
-  let allowed_keys = [39,68,38,87,37,65,40,83];
-  if (!allowed_keys.includes(event.keyCode)) {return;}
-  var active = document.activeElement;
-  if (!active.hasOwnProperty('rowcol')) {return;}
+document.addEventListener('keydown', prevent_backspace_navigation);
+function prevent_backspace_navigation(e) {
+  if (e.which === 8) {
+    e.preventDefault();
+    current_cell.value = '';
+  }
+}
 
+const directional_keys = [39,68,38,87,37,65,40,83];
+const integer_keys = [49,50,51,52,53,54,55,56,57];
+function keycheck(event) {
+  if (integer_keys.includes(event.keyCode)) {
+    current_cell.value = event.key;
+    return;
+  }
+
+  if (!directional_keys.includes(event.keyCode)) {return;}
   if (event.keyCode===39 || event.keyCode===68) {
     var direction = sym_right;
   } else if (event.keyCode===37 || event.keyCode===65) {
@@ -247,7 +270,7 @@ function keycheck(event) {
   } else if (event.keyCode===40 || event.keyCode===83) {
     var direction = sym_down;
   }
-  let s = active.rowcol.split('-');
+  let s = current_cell.rowcol.split('-');
   var r = s[0];
   var c = s[1];
   focus_next(r,c,direction);
@@ -280,9 +303,6 @@ function focus_next(r,c,direction) {
     if (document.getElementById(next_id).disabled === false) {break;}
   }
   document.getElementById(next_id).focus();
-  console.log(`current: ${r} ${c}`)
-  console.log(`next: ${next_rowcol}`)
-  console.log(`disabled: ${document.getElementById(next_id).disabled}`)
 }
 
 
