@@ -17,10 +17,6 @@
         background-color: #FAFAFA
       }
 
-      table {
-        border: 2px solid #000000;
-      }
-
       td {
         border: 1px solid #000000;
         text-align: center;
@@ -45,6 +41,7 @@
         border-radius: 10px;
         background-image: radial-gradient(circle at top left, rgba(255,255,255,1) 25%, rgba(150,149,172,1) 100%);
         box-shadow: inset 2px 2px 3px rgba(255, 255, 255, .6), inset -2px -2px 3px rgba(0, 0, 0, .6);
+        touch-action: manipulation;
       }
       button.numbutton:hover {
         background: rgba(150,149,172,1);
@@ -59,6 +56,7 @@
         text-align: "center";
         background: radial-gradient(circle at top left, rgba(255,255,255,1) 25%, rgba(150,149,172,1) 100%);
         clip-path: polygon(20% 0%, 80% 0%, 100% 20%, 100% 80%, 80% 100%, 20% 100%, 0% 80%, 0% 20%);
+        touch-action: manipulation;
       }
       .super_arrow:hover {
         background: rgba(150,149,172,1);
@@ -72,6 +70,7 @@
         width: 60px;
         height: 60px;
         background: radial-gradient(circle at top left, rgba(255,255,255,1) 25%, rgba(150,149,172,1) 100%);
+        touch-action: manipulation;
       }
       .dpad:hover {
         background: rgba(150,149,172,1);
@@ -92,6 +91,12 @@
         clip-path: ellipse(100% 100% at 50% 0%);   /* polygon(0% 0%, 100% 0, 100% 75%, 50% 100%, 0 75%); */
       }
 
+      .control_panel {
+        border: none;
+        width: 100%;
+        touch-action: manipulation;
+      }
+     
       p[cell=""] {
         color: #000000;
         padding: 0;
@@ -102,6 +107,7 @@
         height: 48px;
         font-size: 24px;
         background-color: #FFFFFF;
+        touch-action: manipulation;
         outline: none;
       }
 
@@ -261,10 +267,10 @@ let solver = new SudokuSolver(puzzle_str);
 var cell_lookup = {};
 function addTable(solver, cell_lookup) {
   var t, r, c, container, content;
-  div = document.createElement("div");
+  let div = document.createElement("div");
   div.id = "board_container";
   board_name = document.createElement("h");
-  board_name.textContent = "My Great Board";
+  board_name.textContent = "Sudoku, by Andrew Daltas";
   div.appendChild(board_name);
   t = document.createElement('table');
   div.appendChild(t);
@@ -286,7 +292,7 @@ function addTable(solver, cell_lookup) {
       c.appendChild(container);
     }
   }
-  document.body.appendChild(div);
+  return div;
 }
 
 function init_cell_content(id, clue_cell, rowcol, text_content) {
@@ -308,10 +314,6 @@ function intercept_click(event) {
     doTheNecessary(event.target.id);
   }
 }
-
-addTable(solver, cell_lookup);
-var current_cell = document.getElementById('cell-0');
-setCurrentCellStyle();
 
 document.addEventListener('keydown', intercept_keydowns);
 const integer_keys = ['1','2','3','4','5','6','7','8','9'];
@@ -458,6 +460,7 @@ function setCurrentCellStyle() {
   }
 }
 
+
 function createDirectionalPad() {
   var d, t, r, c, b;
   d = document.createElement("div");
@@ -527,7 +530,7 @@ function createDialPad() {
   d.appendChild(t);
   t.id = "dial_pad_table";
   t.style.border = "0";
-  for (let i=1; i < 13; i++) {
+  for (let i=1; i < 10; i++) {
     if (i % 3 === 1) {
       var r = t.insertRow();
     }
@@ -543,45 +546,29 @@ function createDialPad() {
   return d;
 }
 
+function createToolSet() {
+  // eraser/pencil/color_picker shall be a: div of divs of buttons
+  let div = document.createElement('div');
+  div.style.display = "inline-block";
+  eraser_button = document.createElement('button');
+  pencil_select = document.createElement('button');
+  color_picker = document.createElement('button');
+  
+}
+
+
 function signalDialPad(e) {
   console.log(`Dial Pad Alert! Dial Button: ${e.target.textContent} was triggered!`);
   if (mode === SOLVE && integer_keys.includes(e.target.textContent) && !current_cell.hasAttribute('clue_cell')) {
     editCell(e.target.textContent);
-  } else if (false) {
-    // Eraser
-    //   or 
-    // Pencil 
+  } else if (mode === PENCIL) {
+    editPencilCell(parseInt(e.target.textContent));
+  } else if (mode === ERASER) {
+    false;
   }
 }
 
-function createGamePad() {
-  const dial_pad = createDialPad();
-  const directional_pad = createDirectionalPad();
-  const t = document.createElement('table');
-  t.id = "gamepad";
-  r = t.insertRow();
-  t.style.tableLayout = "fixed";
-  t.style.width = "444px";
-  t.style.border = "0";
-  c1 = r.insertCell();
-  c2 = r.insertCell();
-  c1.style.border = "0";
-  c2.style.border = "0";
-  d1 = document.createElement('div');
-  d2 = document.createElement('div');
-  d1.appendChild(dial_pad);
-  d2.appendChild(directional_pad);
-  dial_pad.align = "center";
-  directional_pad.align = "center";
-  c1.appendChild(d1);
-  c2.appendChild(d2);
-  c1.style.background = "#EEEEEE";
-  c2.style.background = "#EEEEEE";
-  return t;
-}
 
-const game_pad = createGamePad();
-document.body.appendChild(game_pad);
 
 function editPencilCell(digit) {
   var pencil_content, span;
@@ -631,6 +618,60 @@ function createPencilContent() {
   }
   return pencil_content;
 }
+
+
+
+
+function createMenuSelect() {
+  let div = document.createElement('div');
+  let select = document.createElement('select');
+  let option1 = document.createElement('option');
+  option1.textContent = "--Menu--";
+  option1.value = "--Menu--";
+
+  
+  let option2 = document.createElement('option');
+  option2.textContent = "New Game";
+  option2.value = "new_game";
+
+  let option3 = document.createElement('option');
+  option3.textContent = "Settings";
+  option3.value = "settings";
+
+  select.appendChild(option1);
+  select.appendChild(option2);
+  select.appendChild(option3);
+  div.appendChild(select);
+  return div;
+}
+
+const board = addTable(solver, cell_lookup);
+const dial_pad = createDialPad();
+const directional_pad = createDirectionalPad();
+
+const div = document.createElement('div');
+div.appendChild(board);
+const t = document.createElement('table');
+t.id = "control_panel";
+div.style.display = "inline-block";
+let r = t.insertRow();
+let c1 = r.insertCell();
+let c2 = r.insertCell();
+c1.className = "control_panel dial";
+c2.className = "control_panel direction";
+c1.appendChild(dial_pad);
+c2.appendChild(directional_pad);
+div.appendChild(t);
+document.body.appendChild(div);
+
+const menu_select = createMenuSelect();
+document.body.appendChild(menu_select);
+
+var current_cell = document.getElementById('cell-0');
+setCurrentCellStyle();
+
+
+
 
 </script>
 </body>
