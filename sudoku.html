@@ -283,6 +283,7 @@ class SudokuSolver {
   }
 }
 
+
 var cell_lookup = {};
 function addTable(solver, cell_lookup) {
   var t, r, c, container, content;
@@ -510,6 +511,7 @@ function setCurrentCellStyle() {
   }
 }
 
+
 function createDirectionalPad() {
   var d, t, r, c, b;
   d = document.createElement("div");
@@ -620,6 +622,8 @@ function createEraseButton() {
   return div;
 }
 
+
+
 function editPencilCell(digit) {
   var pencil_content, span;
   var color = color_lookup[pencil_color];
@@ -669,6 +673,8 @@ function createPencilContent() {
   return pencil_content;
 }
 
+
+
 function createMenuSelect() {
   let div = document.createElement('div');
 
@@ -716,8 +722,7 @@ function loadNewPuzzle(event) {
   event.target.selectedIndex = 0;
   event.target.blur();
 
-  //var puzzle_str = randomPuzzle(difficulty);
-  var puzzle_str = weCanDoBetter(difficulty);
+  var puzzle_str = randomPuzzle(difficulty);
   solver.init(puzzle_str);
 
   for (let i=0; i < solver.puzzle.length; i++) {
@@ -731,10 +736,12 @@ function loadNewPuzzle(event) {
       } else {
         cell_element.removeAttribute('clue_cell');
         cell_element.innerText = "";
+        cell_element.style.backgroundColor = "#FFFFFF";
       }
     } else if (solver_cell.value) {
       cell_element.setAttribute('clue_cell','');
       cell_element.innerText = solver_cell.value;
+      cell_element.style.backgroundColor = "#EEEEEE";
     } else {
       cell_element.style.fontSize = "24px";
       cell_element.style.fontFamily = "";
@@ -742,6 +749,7 @@ function loadNewPuzzle(event) {
       cell_element.innerText = "";
     }
   }
+  setCurrentCellStyle();
 }
 
 const easy_puzzles = [
@@ -787,6 +795,7 @@ played_puzzles[MEDIUM] = [];
 played_puzzles[HARD]   = [];
 played_puzzles[EXPERT] = [];
 
+
 function randomPuzzle(difficulty) {
   var puzzles = all_puzzles[difficulty];
   var puzzle_idxs = Array.from(Array(puzzles.length).keys());
@@ -805,28 +814,7 @@ function randomPuzzle(difficulty) {
   return puzzles[random_int];
 }
 
-function weCanDoBetter(difficulty) {
-  var puzzles = all_puzzles[difficulty];
-  var last_served = played_puzzles[difficulty][played_puzzles[difficulty].length -1];
-  console.log(last_served);
-  if (last_served) {
-    puzzles.splice(puzzles.indexOf(last_served), 1);
-  }
-  var puzzle_idxs = Array.from(Array(puzzles.length).keys());
-  played_puzzles[difficulty].forEach(idx => puzzle_idxs.splice(puzzle_idxs.indexOf(idx), 1));
-  if (puzzle_idxs.length === 0) {
-    var puzzle_idxs = Array.from(Array(puzzles.length).keys());
-    puzzle_idxs.splice(puzzle_idxs.indexOf(played_puzzles[difficulty][0], 1));
-    played_puzzles[difficulty] = [];
-  }
-  let min = 0;
-  let max = puzzle_idxs.length;
-  let random_int = Math.floor(Math.random() * (max - min) + min);
-  if (!played_puzzles[difficulty].includes(random_int)) {
-    played_puzzles[difficulty].push(random_int);
-  }
-  return puzzles[random_int];
-}
+
 
 const sym_row = Symbol('row')
 const sym_col = Symbol('column');
