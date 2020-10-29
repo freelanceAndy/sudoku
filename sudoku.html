@@ -36,8 +36,8 @@
         width: 60px;
         height: 60px;
         text-align: center;
-        color: #fff;
-        text-shadow: 1px 1px 1px #000;
+        color: #82bbe6;
+        text-shadow: 1px 1px 1px #a4d4fa;
         border-radius: 10px;
         background-image: radial-gradient(circle at top left, rgba(255,255,255,1) 25%, rgba(150,149,172,1) 100%);
         box-shadow: inset 2px 2px 3px rgba(255, 255, 255, .6), inset -2px -2px 3px rgba(0, 0, 0, .6);
@@ -169,7 +169,6 @@
 <div id="main"></div>
 <script type="text/javascript">
 
-
 class SudokuCell {
   constructor(value, idx) {
     if (value === '_') {
@@ -283,7 +282,6 @@ class SudokuSolver {
   }
 }
 
-
 var cell_lookup = {};
 function addTable(solver, cell_lookup) {
   var t, r, c, container, content;
@@ -329,7 +327,6 @@ function init_cell_content(id, clue_cell, rowcol, text_content) {
 }
 
 function intercept_click(event) {
-  console.log(`id: ${event.target.id} tagName: ${event.target.tagName} has been clicked!`)
   if (event.target.id.includes('cell-')) {
     doTheNecessary(event.target.id);
   }
@@ -371,7 +368,6 @@ var pencil_color = PENCIL_BLACK;
 
 function editCell(solution) {
   if (mode === SOLVE) {
-    console.log(`solution: ${solution} type: ${typeof(solution)}`);
     let rowcol = current_cell.rowcol;
     let p = init_cell_content(current_cell.id, 
                               current_cell.hasAttribute('clue_cell'),
@@ -511,7 +507,6 @@ function setCurrentCellStyle() {
   }
 }
 
-
 function createDirectionalPad() {
   var d, t, r, c, b;
   d = document.createElement("div");
@@ -598,14 +593,11 @@ function createDialPad() {
 }
 
 function signalDialPad(e) {
-  console.log(`Dial Pad Alert! Dial Button: ${e.target.textContent} was triggered!`);
   if (mode === SOLVE && integer_keys.includes(e.target.textContent) && !current_cell.hasAttribute('clue_cell')) {
     editCell(e.target.textContent);
   } else if (mode === PENCIL) {
     editPencilCell(parseInt(e.target.textContent));
-  } else if (mode === ERASER) {
-    false;
-  }
+  } 
 }
 
 function createEraseButton() {
@@ -621,8 +613,6 @@ function createEraseButton() {
   div.appendChild(eraser_button);
   return div;
 }
-
-
 
 function editPencilCell(digit) {
   var pencil_content, span;
@@ -672,8 +662,6 @@ function createPencilContent() {
   }
   return pencil_content;
 }
-
-
 
 function createMenuSelect() {
   let div = document.createElement('div');
@@ -789,32 +777,20 @@ all_puzzles[MEDIUM] = medium_puzzles;
 all_puzzles[HARD]   = hard_puzzles;
 all_puzzles[EXPERT] = expert_puzzles;
 
-const played_puzzles = new Map()
-played_puzzles[EASY]   = [];
-played_puzzles[MEDIUM] = [];
-played_puzzles[HARD]   = [];
-played_puzzles[EXPERT] = [];
-
+var last_played = null;
 
 function randomPuzzle(difficulty) {
-  var puzzles = all_puzzles[difficulty];
-  var puzzle_idxs = Array.from(Array(puzzles.length).keys());
-  played_puzzles[difficulty].forEach(idx => puzzle_idxs.splice(puzzle_idxs.indexOf(idx), 1));
-  if (puzzle_idxs.length === 0) {
-    var puzzle_idxs = Array.from(Array(puzzles.length).keys());
-    puzzle_idxs.splice(puzzle_idxs.indexOf(played_puzzles[difficulty][0], 1));
-    played_puzzles[difficulty] = 0;
+  var puzzles = [...all_puzzles[difficulty]];
+  var index = puzzles.indexOf(last_played);
+  if (index > -1) {
+    puzzles.splice(index, 1);
   }
   let min = 0;
-  let max = puzzle_idxs.length;
+  let max = puzzles.length;
   let random_int = Math.floor(Math.random() * (max - min) + min);
-  if (!played_puzzles[difficulty].includes(random_int)) {
-    played_puzzles[difficulty].push();
-  }
-  return puzzles[random_int];
+  last_played = puzzles[random_int];
+  return last_played;
 }
-
-
 
 const sym_row = Symbol('row')
 const sym_col = Symbol('column');
@@ -822,7 +798,8 @@ const sym_blk = Symbol('block');
 const entities = [sym_row, sym_col, sym_blk];
 const all_values = new Set(['1','2','3','4','5','6','7','8','9']);
 
-var puzzle_str = randomPuzzle(EASY)
+var difficulty = EASY;
+var puzzle_str = randomPuzzle(difficulty)
 let solver = new SudokuSolver(puzzle_str);
 
 var board = addTable(solver, cell_lookup);
