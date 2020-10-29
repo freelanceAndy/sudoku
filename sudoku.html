@@ -169,10 +169,7 @@
 <div id="main"></div>
 <script type="text/javascript">
 
-const sym_row = Symbol('row');
-const sym_col = Symbol('column');
-const sym_blk = Symbol('block');
-const all_values = new Set(['1','2','3','4','5','6','7','8','9']);
+
 class SudokuCell {
   constructor(value, idx) {
     if (value === '_') {
@@ -233,18 +230,24 @@ const blk_lookup = {
 
 class SudokuSolver {
   constructor(puzzle_str) {
+    this.init(puzzle_str);
+  }
+  init(puzzle_str) {
     this.puzzle_str = puzzle_str;
     this.puzzle = [];
     this.puzzle_by_id  = {};
     this.puzzle_by_row = {};
     this.puzzle_by_col = {};
     this.puzzle_by_blk = {};
-    this.puzzle_ent = {sym_row: this.puzzle_by_row, sym_col: this.puzzle_by_col, sym_blk: this.puzzle_by_blk};
+    this.puzzle_ent = new Map();
+    this.puzzle_ent[sym_row] = this.puzzle_by_row;
+    this.puzzle_ent[sym_col] = this.puzzle_by_col;
+    this.puzzle_ent[sym_blk] = this.puzzle_by_blk;
     this.unsolved_cell_count = 0
     for (let i=0; i < this.puzzle_str.length; i++) {
       let cell = new SudokuCell(this.puzzle_str.charAt(i), i);
       this.puzzle.push(cell);
-      this.puzzle_by_id[`${cell.row}${cell.col}`] = cell
+      this.puzzle_by_id[`${cell.row}-${cell.col}`] = cell
       this.append_to_map_array(this.puzzle_by_row, cell, cell.row)
       this.append_to_map_array(this.puzzle_by_col, cell, cell.col)
       this.append_to_map_array(this.puzzle_by_blk, cell, cell.blk)
@@ -260,10 +263,26 @@ class SudokuSolver {
       obj[item_vector] = [item]
     }
   }
+  boardCorrect() {
+    var entity_type, ent, ent_vals, ent_vals_set, same
+    for (let i = 0; i < 3; i++) {
+      var entity_type = entities[i];
+      for (let idx = 0; idx < 9; idx++) {
+        var ent = this.puzzle_ent[entity_type][idx+1];
+        var ent_vals = ent.map(function(cell) {
+          return cell.value;
+        })
+        var ent_vals_set = new Set(ent_vals);
+        var same = new Set([...all_values].filter(x => !ent_vals_set.has(x))).size === 0;
+        if (!same) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
 }
 
-let puzzle_str = "_6___914__28__6_579_421_______3_5__8_8_9_4_2_3__8_1_______527_661_7__43__756___1_";
-let solver = new SudokuSolver(puzzle_str);
 var cell_lookup = {};
 function addTable(solver, cell_lookup) {
   var t, r, c, container, content;
@@ -287,7 +306,7 @@ function addTable(solver, cell_lookup) {
                                   cell.value || '');
       cell_lookup[content.rowcol] = content.id;
       content.onmouseover = doTheNecessary;
-      container.onclick = intercept_click;
+      container.onmousedown = intercept_click;
       container.appendChild(content);
       c.appendChild(container);
     }
@@ -360,9 +379,29 @@ function editCell(solution) {
     current_cell.outerHTML = p.outerHTML;
     current_cell = document.getElementById(current_cell.id);
     current_cell.rowcol = rowcol;
-    setCurrentCellStyle()
+    setCurrentCellStyle();
+    checkGameProgress(solution);
   } else if (mode === PENCIL) {
     editPencilCell(parseInt(solution));
+  }
+}
+
+const NO_FB = Symbol('No Feedback');
+const BLATANT_ERROR_FB = Symbol('Only warn blatant mistakes');
+const ALL_ERROR_FB = Symbol('Warn when wrong');
+var gameplay_feedback = NO_FB;
+function checkGameProgress(solution) {
+  if (!solver.puzzle_by_id[current_cell.rowcol].value) {
+    solver.unsolved_cell_count--;
+  }
+  solver.puzzle_by_id[current_cell.rowcol].value = solution;
+  if (solver.unsolved_cell_count != 0) {
+    return;
+  }
+  if (solver.boardCorrect()) {
+    alert("Congratulations!");
+  } else {
+    alert("Board Invalid.");
   }
 }
 
@@ -412,6 +451,7 @@ function change_current_cell(event_keycode) {
       }
     } else {
       var seeking = parseInt(c) + increment;
+      seeking = hitWallTeleport(seeking);
     }
     var next_rowcol = `${r}-${seeking}`;
   } else {
@@ -423,6 +463,7 @@ function change_current_cell(event_keycode) {
       }
     } else {
       var seeking = parseInt(r) + increment;
+      seeking = hitWallTeleport(seeking);
     }
     var next_rowcol = `${seeking}-${c}`;
   }
@@ -430,6 +471,15 @@ function change_current_cell(event_keycode) {
   var next_id = cell_lookup[next_rowcol];
 
   doTheNecessary(next_id);
+}
+
+function hitWallTeleport(seeking) {
+  if (1 > seeking) {
+    seeking = 9;
+  } else if (seeking > 9) {
+    seeking = 1;
+  }
+  return seeking;
 }
 
 function doTheNecessary(cell_or_event) {
@@ -460,7 +510,6 @@ function setCurrentCellStyle() {
   }
 }
 
-
 function createDirectionalPad() {
   var d, t, r, c, b;
   d = document.createElement("div");
@@ -479,7 +528,7 @@ function createDirectionalPad() {
       let b = document.createElement('button');
       b.id = "super_arrow";
       b.className = "super_arrow";
-      b.onclick = toggleSuperArrow;
+      b.onmousedown = toggleSuperArrow;
       c.appendChild(b);
     }
     if (i % 2 != 0) {
@@ -487,7 +536,7 @@ function createDirectionalPad() {
     }
 
     let b = document.createElement('button');
-    b.onclick = sendSignal;
+    b.onmousedown = sendSignal;
     if (i === 2) {
       b.className = "dpad dpad-up";
       b.direction = '38';
@@ -539,23 +588,12 @@ function createDialPad() {
 
     let b = document.createElement('button');
     b.className = "numbutton";
-    b.onclick = signalDialPad;
+    b.onmousedown = signalDialPad;
     b.textContent = i.toString();
     c.appendChild(b);
   }
   return d;
 }
-
-function createToolSet() {
-  // eraser/pencil/color_picker shall be a: div of divs of buttons
-  let div = document.createElement('div');
-  div.style.display = "inline-block";
-  eraser_button = document.createElement('button');
-  pencil_select = document.createElement('button');
-  color_picker = document.createElement('button');
-  
-}
-
 
 function signalDialPad(e) {
   console.log(`Dial Pad Alert! Dial Button: ${e.target.textContent} was triggered!`);
@@ -568,7 +606,19 @@ function signalDialPad(e) {
   }
 }
 
-
+function createEraseButton() {
+  let div = document.createElement('div');
+  div.style.display = "inline-block";
+  let eraser_button = document.createElement('button');
+  eraser_button.className = "numbutton";
+  eraser_button.textContent = ""
+  let svg = document.createElement('img');
+  svg.src = "eraser.svg";
+  eraser_button.appendChild(svg);
+  eraser_button.onclick = eraseCellContent;
+  div.appendChild(eraser_button);
+  return div;
+}
 
 function editPencilCell(digit) {
   var pencil_content, span;
@@ -619,35 +669,178 @@ function createPencilContent() {
   return pencil_content;
 }
 
-
-
-
 function createMenuSelect() {
   let div = document.createElement('div');
+
   let select = document.createElement('select');
+  select.id = "menu_selector";
+  select.onchange = loadNewPuzzle;
+
   let option1 = document.createElement('option');
-  option1.textContent = "--Menu--";
-  option1.value = "--Menu--";
-
-  
   let option2 = document.createElement('option');
-  option2.textContent = "New Game";
-  option2.value = "new_game";
-
   let option3 = document.createElement('option');
-  option3.textContent = "Settings";
-  option3.value = "settings";
+  let option4 = document.createElement('option');
+  let option5 = document.createElement('option');
 
+  option1.textContent = "--New Game--";
+  option2.textContent = "Easy";
+  option3.textContent = "Medium";
+  option4.textContent = "Hard";
+  option5.textContent = "Expert";
+  option2.value = "easy";
+  option3.value = "medium";
+  option4.value = "hard";
+  option5.value = "expert";
   select.appendChild(option1);
   select.appendChild(option2);
   select.appendChild(option3);
+  select.appendChild(option4);
+  select.appendChild(option5);
   div.appendChild(select);
   return div;
 }
 
-const board = addTable(solver, cell_lookup);
+function loadNewPuzzle(event) {
+  if (event.target.value === "easy") {
+    difficulty = EASY;
+  }
+  else if (event.target.value === "medium") {
+    difficulty = MEDIUM;
+  }
+  else if (event.target.value === "hard") {
+    difficulty = HARD;
+  }
+  else if (event.target.value === "expert") {
+    difficulty = EXPERT;
+  }
+  event.target.selectedIndex = 0;
+  event.target.blur();
+
+  //var puzzle_str = randomPuzzle(difficulty);
+  var puzzle_str = weCanDoBetter(difficulty);
+  solver.init(puzzle_str);
+
+  for (let i=0; i < solver.puzzle.length; i++) {
+    solver_cell = solver.puzzle[i];
+    cell_element = document.getElementById(`cell-${i}`);
+    
+    cell_element.removeAttribute('pencil_content');
+    if (cell_element.hasAttribute('clue_cell')) {
+      if (solver_cell.value) {
+        cell_element.innerText = solver_cell.value;
+      } else {
+        cell_element.removeAttribute('clue_cell');
+        cell_element.innerText = "";
+      }
+    } else if (solver_cell.value) {
+      cell_element.setAttribute('clue_cell','');
+      cell_element.innerText = solver_cell.value;
+    } else {
+      cell_element.style.fontSize = "24px";
+      cell_element.style.fontFamily = "";
+      cell_element.style.lineHeight = "48px";
+      cell_element.innerText = "";
+    }
+  }
+}
+
+const easy_puzzles = [
+  "_6___914__28__6_579_421_______3_5__8_8_9_4_2_3__8_1_______527_661_7__43__756___1_",
+  "___3_618963158_27__9__72___4_7________3___2________6_8___65__9_37__248519258_3___",
+  "_1_39__5_2__4_6_98_83___1____87_1__6___925___5__6_39____1___67_65_1_4__2_3__69_1_",
+  "__46___381____86__68_4___5__3_1__829__83_25__762__9_4__4___6_82__95____632___14__"
+];
+const medium_puzzles = [
+  "____5___7_____841___47___56__6_49_2_4_3___7_9_8_16_5__76___21___956_____3___7____",
+  "_9_45___7_____1_48____9_52__2___6__4__79_42__1__8___3__42_8____67_3_____9___27_6_",
+  "___65_____691__2____1_47___13___69_2__2___6__6_82___43___76_5____4__183_____94___",
+  "1_2_______86__52___4__8__16_7___68___38_7_62___19___7_56__9__3___35__98_______5_2"
+]
+
+const hard_puzzles = [
+  "_______96__84_9__7_7___68___236_______1___4_______468___47___5_9__5_12__73_______",
+  "__8_1___2_459_________58__4_7___54_9_9_____6_5_43___1_1__26_________194_4___7_5__",
+  "_3____9_791_____6_8_4________948____24__9__81____165________2_3_6_____943_2____5_",
+  "___6__5___9475_____1____8_4__95___2__8__4__3__5___76__1_3____5_____2648___2__5___"
+]
+
+const expert_puzzles = [
+  "__3_1__4_5__8______71_______5___3__6_8_1_7_5_2__9___8_______46______2__3_2__9_8__",
+  "_9_________3___4_751_6___9__7__84_5____2_5____4_36__8__8___6_131_4___5_________4_",
+  "3_9__7__1______________8_53_2__19_8___4_2_7___8_37__9_51_6______________2__9__6_4"
+]
+
+const EASY   = Symbol('EASY');
+const MEDIUM = Symbol('MEDIUM');
+const HARD   = Symbol('HARD');
+const EXPERT = Symbol('EXPERT');
+
+const all_puzzles = new Map();
+all_puzzles[EASY]   = easy_puzzles;
+all_puzzles[MEDIUM] = medium_puzzles;
+all_puzzles[HARD]   = hard_puzzles;
+all_puzzles[EXPERT] = expert_puzzles;
+
+const played_puzzles = new Map()
+played_puzzles[EASY]   = [];
+played_puzzles[MEDIUM] = [];
+played_puzzles[HARD]   = [];
+played_puzzles[EXPERT] = [];
+
+function randomPuzzle(difficulty) {
+  var puzzles = all_puzzles[difficulty];
+  var puzzle_idxs = Array.from(Array(puzzles.length).keys());
+  played_puzzles[difficulty].forEach(idx => puzzle_idxs.splice(puzzle_idxs.indexOf(idx), 1));
+  if (puzzle_idxs.length === 0) {
+    var puzzle_idxs = Array.from(Array(puzzles.length).keys());
+    puzzle_idxs.splice(puzzle_idxs.indexOf(played_puzzles[difficulty][0], 1));
+    played_puzzles[difficulty] = 0;
+  }
+  let min = 0;
+  let max = puzzle_idxs.length;
+  let random_int = Math.floor(Math.random() * (max - min) + min);
+  if (!played_puzzles[difficulty].includes(random_int)) {
+    played_puzzles[difficulty].push();
+  }
+  return puzzles[random_int];
+}
+
+function weCanDoBetter(difficulty) {
+  var puzzles = all_puzzles[difficulty];
+  var last_served = played_puzzles[difficulty][played_puzzles[difficulty].length -1];
+  console.log(last_served);
+  if (last_served) {
+    puzzles.splice(puzzles.indexOf(last_served), 1);
+  }
+  var puzzle_idxs = Array.from(Array(puzzles.length).keys());
+  played_puzzles[difficulty].forEach(idx => puzzle_idxs.splice(puzzle_idxs.indexOf(idx), 1));
+  if (puzzle_idxs.length === 0) {
+    var puzzle_idxs = Array.from(Array(puzzles.length).keys());
+    puzzle_idxs.splice(puzzle_idxs.indexOf(played_puzzles[difficulty][0], 1));
+    played_puzzles[difficulty] = [];
+  }
+  let min = 0;
+  let max = puzzle_idxs.length;
+  let random_int = Math.floor(Math.random() * (max - min) + min);
+  if (!played_puzzles[difficulty].includes(random_int)) {
+    played_puzzles[difficulty].push(random_int);
+  }
+  return puzzles[random_int];
+}
+
+const sym_row = Symbol('row')
+const sym_col = Symbol('column');
+const sym_blk = Symbol('block');
+const entities = [sym_row, sym_col, sym_blk];
+const all_values = new Set(['1','2','3','4','5','6','7','8','9']);
+
+var puzzle_str = randomPuzzle(EASY)
+let solver = new SudokuSolver(puzzle_str);
+
+var board = addTable(solver, cell_lookup);
 const dial_pad = createDialPad();
 const directional_pad = createDirectionalPad();
+const eraser_button = createEraseButton();
 
 const div = document.createElement('div');
 div.appendChild(board);
@@ -656,12 +849,13 @@ t.id = "control_panel";
 div.style.display = "inline-block";
 let r = t.insertRow();
 let c1 = r.insertCell();
-let c2 = r.insertCell();
+let c3 = r.insertCell();
 c1.className = "control_panel dial";
-c2.className = "control_panel direction";
+c3.className = "control_panel direction";
 c1.appendChild(dial_pad);
-c2.appendChild(directional_pad);
+c3.appendChild(directional_pad);
 div.appendChild(t);
+dial_pad.children[0].children[0].children[1].appendChild(eraser_button)
 document.body.appendChild(div);
 
 const menu_select = createMenuSelect();
@@ -669,9 +863,6 @@ document.body.appendChild(menu_select);
 
 var current_cell = document.getElementById('cell-0');
 setCurrentCellStyle();
-
-
-
 
 </script>
 </body>
