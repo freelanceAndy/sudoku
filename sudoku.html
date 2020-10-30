@@ -392,6 +392,9 @@ function checkGameProgress(solution) {
 }
 
 function eraseCellContent() {
+  if (current_cell.hasAttribute('clue_cell')) {
+    return;
+  }
   let rowcol = current_cell.rowcol;
   let p = init_cell_content(current_cell.id, 
                             current_cell.hasAttribute('clue_cell'),
