@@ -5,7 +5,7 @@
 <link rel="icon" type="image/ico" href="http://127.0.0.1/favicon.ico" />
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=0.86, maximum-scale=3.0, minimum-scale=0.86">
+    <meta name="viewport" content="width=device-width, initial-scale=1.00, maximum-scale=3.0, minimum-scale=1.00">
     
     <title>HTML Sudoku Board</title>
     
@@ -154,6 +154,7 @@
 <div id="main"></div>
 <script type="text/javascript">
 
+
 class SudokuCell {
   constructor(value, idx) {
     if (value === '_') {
@@ -212,6 +213,7 @@ const blk_lookup = {
   9: blk_col_3
 }
 
+
 class SudokuSolver {
   constructor(puzzle_str) {
     this.init(puzzle_str);
@@ -266,6 +268,8 @@ class SudokuSolver {
     return true;
   }
 }
+
+
 
 var cell_lookup = {};
 function addTable(solver, cell_lookup) {
@@ -475,6 +479,7 @@ function setCurrentCellStyle() {
   }
 }
 
+
 function createDirectionalPad() {
   var d, t, r, c, b;
   d = document.createElement("div");
@@ -564,6 +569,7 @@ function createEraseButton() {
   return div;
 }
 
+
 function editPencilCell(digit) {
   var pencil_content, span;
   var color = color_lookup[pencil_color];
@@ -612,6 +618,7 @@ function createPencilContent() {
   }
   return pencil_content;
 }
+
 
 function createMenuSelect() {
   let div = document.createElement('div');
@@ -741,6 +748,7 @@ function randomPuzzle(difficulty) {
   return last_played;
 }
 
+
 const sym_row = Symbol('row')
 const sym_col = Symbol('column');
 const sym_blk = Symbol('block');
@@ -777,6 +785,8 @@ document.body.appendChild(menu_select);
 
 var current_cell = document.getElementById('cell-0');
 setCurrentCellStyle();
+
+
 
 </script>
 </body>
