@@ -221,7 +221,7 @@ class SudokuSolver {
   init(puzzle_str) {
     this.puzzle_str = puzzle_str;
     this.puzzle = [];
-    this.puzzle_by_id  = {};
+    this.puzzle_by_rowcol  = {};
     this.puzzle_by_row = {};
     this.puzzle_by_col = {};
     this.puzzle_by_blk = {};
@@ -233,7 +233,7 @@ class SudokuSolver {
     for (let i=0; i < this.puzzle_str.length; i++) {
       let cell = new SudokuCell(this.puzzle_str.charAt(i), i);
       this.puzzle.push(cell);
-      this.puzzle_by_id[`${cell.row}-${cell.col}`] = cell
+      this.puzzle_by_rowcol[`${cell.row}-${cell.col}`] = cell
       this.append_to_map_array(this.puzzle_by_row, cell, cell.row)
       this.append_to_map_array(this.puzzle_by_col, cell, cell.col)
       this.append_to_map_array(this.puzzle_by_blk, cell, cell.blk)
@@ -242,6 +242,7 @@ class SudokuSolver {
       }
     }
   }
+
   append_to_map_array(obj, item, item_vector) {
     if (obj.hasOwnProperty(item_vector)) {
       obj[item_vector].push(item)
@@ -249,6 +250,34 @@ class SudokuSolver {
       obj[item_vector] = [item]
     }
   }
+
+  addValueToSolver(value, cell_rowcol) {
+    var solver_cell = this.puzzle_by_rowcol[cell_rowcol];
+    var increment = solver_cell.value === null ? 1 : 0;
+    solver_cell.value = value;
+    this.unsolved_cell_count = this.unsolved_cell_count - increment;
+    this.checkProgress();
+  }
+
+  removeValueFromSolver(cell_rowcol) {
+    var solver_cell = this.puzzle_by_rowcol[cell_rowcol];
+    var decrement = solver_cell.value === null ? 0 : 1;
+    solver_cell.value = null;
+    this.unsolved_cell_count = this.unsolved_cell_count + decrement;
+    this.checkProgress();
+  }
+
+  checkProgress() {
+    if (this.unsolved_cell_count != 0) {
+      return;
+    }
+    if (this.boardCorrect()) {
+      alert("Congratulations!");
+    } else {
+      alert("Board Invalid.");
+    }
+  }
+
   boardCorrect() {
     var entity_type, ent, ent_vals, ent_vals_set, same
     for (let i = 0; i < 3; i++) {
@@ -366,28 +395,9 @@ function editCell(solution) {
     current_cell = document.getElementById(current_cell.id);
     current_cell.rowcol = rowcol;
     setCurrentCellStyle();
-    checkGameProgress(solution);
+    solver.addValueToSolver(solution, rowcol);
   } else if (mode === PENCIL) {
     editPencilCell(parseInt(solution));
-  }
-}
-
-const NO_FB = Symbol('No Feedback');
-const BLATANT_ERROR_FB = Symbol('Only warn blatant mistakes');
-const ALL_ERROR_FB = Symbol('Warn when wrong');
-var gameplay_feedback = NO_FB;
-function checkGameProgress(solution) {
-  if (!solver.puzzle_by_id[current_cell.rowcol].value) {
-    solver.unsolved_cell_count--;
-  }
-  solver.puzzle_by_id[current_cell.rowcol].value = solution;
-  if (solver.unsolved_cell_count != 0) {
-    return;
-  }
-  if (solver.boardCorrect()) {
-    alert("Congratulations!");
-  } else {
-    alert("Board Invalid.");
   }
 }
 
@@ -395,6 +405,7 @@ function eraseCellContent() {
   if (current_cell.hasAttribute('clue_cell')) {
     return;
   }
+
   let rowcol = current_cell.rowcol;
   let p = init_cell_content(current_cell.id, 
                             current_cell.hasAttribute('clue_cell'),
@@ -404,6 +415,7 @@ function eraseCellContent() {
   current_cell = document.getElementById(current_cell.id);
   current_cell.rowcol = rowcol;
   setCurrentCellStyle()
+  solver.removeValueFromSolver(rowcol);
 }
 
 const sym_up    = Symbol('UP');
@@ -577,6 +589,11 @@ function editPencilCell(digit) {
   var pencil_content, span;
   var color = color_lookup[pencil_color];
   if (!current_cell.hasAttribute('pencil_content')) {
+
+    if (solver.puzzle_by_rowcol[current_cell.rowcol].value) {
+      solver.removeValueFromSolver(cell_rowcol);
+    }
+
     var pencil_content = createPencilContent();
     span = retrieveSpanToEdit(pencil_content, digit)
     span.style.color = color;
@@ -751,7 +768,6 @@ function randomPuzzle(difficulty) {
   return last_played;
 }
 
-
 const sym_row = Symbol('row')
 const sym_col = Symbol('column');
 const sym_blk = Symbol('block');
@@ -788,8 +804,6 @@ document.body.appendChild(menu_select);
 
 var current_cell = document.getElementById('cell-0');
 setCurrentCellStyle();
-
-
 
 </script>
 </body>
