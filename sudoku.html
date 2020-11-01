@@ -1,3 +1,4 @@
+
 <!DOCTYPE HTML>
 <html>
 <head>
@@ -31,7 +32,7 @@
       button.numbutton {
         border: 0;
         line-height: 2.5;
-        padding: 0 20px;
+        padding: 0 15px;
         font-size: 24px;
         width: 60px;
         height: 60px;
@@ -365,6 +366,10 @@ function intercept_keydowns(event) {
   } else if (directional_keys.includes(event.keyCode)) {
     change_current_cell(event.keyCode);
   }
+
+  console.log(event.key);
+  console.log(document.activeElement);
+
 }
 
 const SOLVE        = Symbol('SOLVE');
@@ -768,6 +773,7 @@ function randomPuzzle(difficulty) {
   return last_played;
 }
 
+
 const sym_row = Symbol('row')
 const sym_col = Symbol('column');
 const sym_blk = Symbol('block');
@@ -787,6 +793,7 @@ const div = document.createElement('div');
 div.appendChild(board);
 const t = document.createElement('table');
 t.id = "control_panel";
+t.style.display = "flex";
 div.style.display = "inline-block";
 let r = t.insertRow();
 let c1 = r.insertCell();
