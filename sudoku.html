@@ -1,4 +1,3 @@
-
 <!DOCTYPE HTML>
 <html>
 <head>
@@ -218,6 +217,12 @@ const blk_lookup = {
 class SudokuSolver {
   constructor(puzzle_str) {
     this.init(puzzle_str);
+    this.cheer = document.createElement('audio');
+    this.cheer.src = "crowd_cheer.mp3";
+    this.cheer.credit = "This audio clip is thanks to lchapman1980 of freesound.com";
+    this.pity = document.createElement('audio');
+    this.pity.src = "crowd_pity.mp3";
+    this.pity.credit = "This audio clip is thanks to Adam_N of freesound.com";
   }
   init(puzzle_str) {
     this.puzzle_str = puzzle_str;
@@ -273,8 +278,10 @@ class SudokuSolver {
       return;
     }
     if (this.boardCorrect()) {
+      this.cheer.play();
       alert("Congratulations!");
     } else {
+      this.pity.play();
       alert("Board Invalid.");
     }
   }
@@ -366,10 +373,6 @@ function intercept_keydowns(event) {
   } else if (directional_keys.includes(event.keyCode)) {
     change_current_cell(event.keyCode);
   }
-
-  console.log(event.key);
-  console.log(document.activeElement);
-
 }
 
 const SOLVE        = Symbol('SOLVE');
@@ -521,21 +524,25 @@ function createDirectionalPad() {
     let b = document.createElement('button');
     b.onmousedown = sendSignal;
     if (i === 2) {
-      b.className = "dpad dpad-up";
-      b.direction = '38';
+      addButtonAttributes(b, "dpad dpad-up", "38", "up-arrow.svg");
     } else if (i === 4) {
-      b.className = "dpad dpad-left";
-      b.direction = '37';
+      addButtonAttributes(b, "dpad dpad-left", "37", "left-arrow.svg");
     } else if (i === 6) {
-      b.className = "dpad dpad-right";
-      b.direction = '39';
+      addButtonAttributes(b, "dpad dpad-right", "39", "right-arrow.svg");
     } else if (i === 8) {
-      b.className = "dpad dpad-down";
-      b.direction = '40';
+      addButtonAttributes(b, "dpad dpad-down", "40", "down-arrow.svg");
     }
     c.appendChild(b);
   }
   return d;
+}
+
+function addButtonAttributes(button, class_name, direction, svg_file_path) {
+  button.className = class_name;
+  button.direction = direction;
+  let svg = document.createElement('img');
+  svg.src = svg_file_path;
+  button.appendChild(svg);
 }
 
 function sendSignal(e) {
