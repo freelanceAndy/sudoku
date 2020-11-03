@@ -219,9 +219,11 @@ class SudokuSolver {
     this.init(puzzle_str);
     this.cheer = document.createElement('audio');
     this.cheer.src = "crowd_cheer.mp3";
+    this.cheer.preload = "auto";
     this.cheer.credit = "This audio clip is thanks to lchapman1980 of freesound.com";
     this.pity = document.createElement('audio');
     this.pity.src = "crowd_pity.mp3";
+    this.pity.preload = "auto";
     this.pity.credit = "This audio clip is thanks to Adam_N of freesound.com";
   }
   init(puzzle_str) {
@@ -305,8 +307,6 @@ class SudokuSolver {
     return true;
   }
 }
-
-
 
 var cell_lookup = {};
 function addTable(solver, cell_lookup) {
