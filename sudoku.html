@@ -308,6 +308,8 @@ class SudokuSolver {
   }
 }
 
+
+
 var cell_lookup = {};
 function addTable(solver, cell_lookup) {
   var t, r, c, container, content;
@@ -546,7 +548,7 @@ function addButtonAttributes(button, class_name, direction, svg_file_path) {
 }
 
 function sendSignal(e) {
-  change_current_cell(parseInt(e.target.direction));
+  change_current_cell(parseInt(e.target.parentElement.direction));
   e.target.blur();
 }
 
@@ -818,6 +820,8 @@ document.body.appendChild(menu_select);
 
 var current_cell = document.getElementById('cell-0');
 setCurrentCellStyle();
+
+
 
 </script>
 </body>
