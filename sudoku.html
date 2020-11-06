@@ -4,23 +4,36 @@
 <title>Sudoku!</title>
 <link rel="icon" type="image/ico" href="http://127.0.0.1/favicon.ico" />
     <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=442">
     
     <title>HTML Sudoku Board</title>
     
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
     
     <style type="text/css">
     
       html, body {
-        background-color: #e7eefc
+        background-color: #e7eefc;
+        border-collapse: collapse;
+        border-spacing: 0;
+        padding: 0px;
+        margin: 0 0 0px;
+      }
+
+      table {
+        padding: 0px;
+        border-collapse: collapse;
+        border-spacing: 0;
       }
 
       td {
         border: 1px solid #000000;
         text-align: center;
         vertical-align: middle;  
+        padding: 0px;
+      }
+
+      tr {
+        padding: 0px;
       }
 
       br { 
@@ -28,6 +41,14 @@
         margin-bottom: -.4em; 
       } 
 
+      #board_name {
+        padding: 0px;
+        border-collapse: collapse;
+        border-spacing: 0;
+        font-size: 12px;
+        font-family: Comic, sans;
+      }
+     
       button.numbutton {
         border: 0;
         line-height: 2.5;
@@ -316,6 +337,7 @@ function addTable(solver, cell_lookup) {
   let div = document.createElement("div");
   div.id = "board_container";
   board_name = document.createElement("h");
+  board_name.id = "board_name";
   board_name.textContent = "Sudoku, by Andrew Daltas";
   div.appendChild(board_name);
   t = document.createElement('table');
@@ -820,8 +842,6 @@ document.body.appendChild(menu_select);
 
 var current_cell = document.getElementById('cell-0');
 setCurrentCellStyle();
-
-
 
 </script>
 </body>
